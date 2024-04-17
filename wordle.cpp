@@ -17,9 +17,10 @@ using namespace std;
 void wordleHelper(
     int index, //current index function is working on
     std::string& possibleWord, //current word function is working on
-    std::string& floating, //queue of all floating letters (so we can pop easier)
+    std::string floating, //queue of all floating letters (so we can pop easier)
     std::set<std::string>& wordSet,
-    const std::set<std::string>& dict); //set of strings to add to once word is valid
+    const std::set<std::string>& dict, //set of strings to add to once word is valid
+    int blankCount);
 
 void wordleFloatHelper(
     int index, //current index function is working on
@@ -45,50 +46,46 @@ std::set<std::string> wordle(
             blankCount++;
         }
     }
-    if (blankCount == floating.size()) { //just need to permute the yellow words through the blank spaces, needs second helper??
-        wordleFloatHelper(0, possibleWord, floatingCopy, wordSet, dict);
-    } else {
-        wordleHelper(0, possibleWord, floatingCopy, wordSet, dict);
-    }
+    
+    wordleHelper(0, possibleWord, floatingCopy, wordSet, dict, blankCount);
 
     return wordSet;
 }
 
 // Define any helper functions here
-void wordleHelper(int index, std::string& possibleWord, std::string& floating, std::set<std::string>& wordSet, const std::set<std::string>& dict) {
+void wordleHelper(int index, std::string& possibleWord, std::string floating, std::set<std::string>& wordSet, const std::set<std::string>& dict, int blankCount) {
     if (index >= possibleWord.size()) {//we've made a full word
         if (floating.size() == 0) {
-            if (dict.find(possibleWord) != dict.end() && wordSet.find(possibleWord) == wordSet.end()) { //word is real and no floating letters and not already found
-                std::string wordCopy = possibleWord; //to avoid having every string in the set reference one string
-                wordSet.insert(wordCopy);
-                //std::cout << possibleWord << std::endl;
+            if (dict.find(possibleWord) != dict.end()) { //word is real and no floating letters and not already found
+                wordSet.insert(possibleWord);
             }
         }
         return;
     }
 
     if (possibleWord[index] != '-') { //if we come across a set letter
-        wordleHelper(index + 1, possibleWord, floating, wordSet, dict); //go to the next position
+        wordleHelper(index + 1, possibleWord, floating, wordSet, dict, blankCount); //go to the next position
         return; //once we're done with all following possibilities, return
     }
 
-    for (int i = 0; i < 26; i++) {
-        char letter = (char)(i + 'a');
-        possibleWord[index] = letter;
-
-        if (floating.find(letter) != std::string::npos) { //if the letter we will try is in floating, take it out so we can say we used it
-            floating.erase(floating.find(letter), 1); //erasing it
-
-            wordleHelper(index + 1, possibleWord, floating, wordSet, dict);
-            floating.push_back(letter);
-        } else {
-            wordleHelper(index + 1, possibleWord, floating, wordSet, dict);
-        }
-    } //all letters have been tried for this spot
+    
+    for (size_t i = 0; i < floating.size(); i++) {
+        std::string floatingCopy = string(floating).erase(i, 1);
+        possibleWord[index] = floating[i];
+        wordleHelper(index+1, possibleWord, floatingCopy, wordSet, dict, blankCount - 1);
+    }
+    
+    if (blankCount > floating.size()) {     
+        for (int i = 0; i < 26; i++) {
+            char letter = (char)(i + 'a');
+            possibleWord[index] = letter;
+            wordleHelper(index + 1, possibleWord, floating, wordSet, dict, blankCount -1 );
+        } //all letters have been tried for this spot
+    }
     possibleWord[index] = '-';
 }
 
-void wordleFloatHelper(int index, std::string& possibleWord, std::string floating, std::set<std::string>& wordSet, const std::set<std::string>& dict) { //pretty much same as wordle helper but only permutes through each letter in floating
+/*void wordleFloatHelper(int index, std::string& possibleWord, std::string floating, std::set<std::string>& wordSet, const std::set<std::string>& dict) { //pretty much same as wordle helper but only permutes through each letter in floating
     if (index >= possibleWord.size()) {//we've made a full word
         if (floating.size() == 0) {
             if (dict.find(possibleWord) != dict.end() && wordSet.find(possibleWord) == wordSet.end()) { //word is real and no floating letters and not already found
@@ -124,4 +121,4 @@ void wordleFloatHelper(int index, std::string& possibleWord, std::string floatin
        //std::cout << "FloatingCopy After Reset: " << floatingCopy << std::endl;
     }
     possibleWord[index] = '-';
-}
+}*/
